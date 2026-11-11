@@ -1,0 +1,16 @@
+Visitas Domiciliares CRAS BF,,,,,
+Digitadora: Marília,,,,,
+Total de Visitas,Visita Realizada,Pendência,Omissão de Componente Familiar,Usuário não Encontrado,Endereço não Localizado
+10,3,3,1,2,1
+,,,,,
+Data,Usuário,CPF,Status da Visita,,
+03/11/2026,Maria de Fátima Silva,123.456.789-01,Pendência,,
+03/11/2026,Francisca Oliveira Santos,234.567.890-12,Visita Realizada,,
+04/11/2026,Raimundo Nonato Ferreira,345.678.901-23,Pendência,,
+04/11/2026,Antonia Alves Lima,456.789.012-34,Usuário não Encontrado,,
+05/11/2026,José Carlos Pereira,567.890.123-45,Visita Realizada,,
+05/11/2026,Maria Aparecida de Sousa,678.901.234-56,Omissão de Componente Familiar,,
+06/11/2026,Ana Paula Rodrigues,789.012.345-67,Endereço não Localizado,,
+06/11/2026,Francisco das Chagas Costa,890.123.456-78,Visita Realizada,,
+07/11/2026,Sebastiana Ribeiro Gomes,901.234.567-89,Pendência,,
+07/11/2026,Antonio Marcos da Cruz,012.345.678-90,Usuário não Encontrado,,
