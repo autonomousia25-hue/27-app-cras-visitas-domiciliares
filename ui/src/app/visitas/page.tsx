@@ -21,7 +21,9 @@ import {
   Phone,
   MessageCircle,
   Home,
-  ClipboardCheck
+  ClipboardCheck,
+  Navigation,
+  ExternalLink
 } from "lucide-react";
 import type { Visita } from "@/lib/sheets";
 
@@ -693,6 +695,21 @@ export default function VisitasPage() {
                               {v.endereco}
                             </span>
                           )}
+                          {(v.endereco || v.bairro) && (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                [v.endereco, v.bairro, "São Luís - MA"].filter(Boolean).join(", ")
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition-colors shadow-2xs"
+                              title="Abrir rota no Google Maps"
+                            >
+                              <Navigation className="w-3 h-3 text-emerald-600" />
+                              <span>Rota Maps</span>
+                              <ExternalLink className="w-2.5 h-2.5 text-emerald-500" />
+                            </a>
+                          )}
                           {v.telefone && (
                             <a
                               href={`tel:${v.telefone.replace(/\D/g, "")}`}
@@ -913,7 +930,24 @@ export default function VisitasPage() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Endereço (Rua, Número)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-600">Endereço (Rua, Número)</label>
+                  {(modalEndereco || modalBairro) && (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        [modalEndereco, modalBairro, "São Luís - MA"].filter(Boolean).join(", ")
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
+                      title="Ver endereço no Google Maps"
+                    >
+                      <Navigation className="w-3 h-3 text-emerald-600" />
+                      <span>Ver no Google Maps</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  )}
+                </div>
                 <input
                   type="text"
                   value={modalEndereco}

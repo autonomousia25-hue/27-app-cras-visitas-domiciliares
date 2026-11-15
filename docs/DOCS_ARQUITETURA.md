@@ -103,6 +103,10 @@ Em conformidade com as diretrizes do esquadrão, a arquitetura do projeto absorv
 - Busca instantânea por Nome, CPF e Bairro.
 - Edição rápida do Status da Visita e do checkbox de atualização no CadÚnico.
 - Formulário para inserção de novas famílias com validação de CPF e máscara em tempo real.
+- **Integração com Google Maps (Universal Search & Deep-Linking):**
+  - Geração dinâmica de links de rota e localização combinando `[Endereço, Bairro, "São Luís - MA"]`.
+  - Atalho `Rota Maps` na tabela de visitas e botão `Ver no Google Maps` no modal de edição.
+  - Deep-link compatível com dispositivos móveis (abre automaticamente o app do Google Maps / Waze para o técnico de campo iniciar a rota via GPS).
 
 ### 5.4 Rodapé Institucional Mandatório
 Toda tela renderiza o componente oficial de marca:
