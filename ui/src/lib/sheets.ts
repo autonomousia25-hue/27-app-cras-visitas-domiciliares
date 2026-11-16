@@ -1,7 +1,16 @@
-import fs from "fs";
-
 const SHEET_ID = process.env.GOOGLE_SHEET_ID || "1VypcdcEoNt3eFb8FsLkaO5NL_CTuvTk4pSloVsLIcak";
 const TOKEN_PATH = process.env.GOOGLE_TOKEN_PATH || "C:/Users/Usuário/.gemini/antigravity/plugin_data/gdrive/token.json";
+
+function getFs(): any {
+  try {
+    return typeof process !== "undefined" && process.versions?.node
+      ? // eslint-disable-next-line @typescript-eslint/no-implied-eval
+        new Function('return typeof require !== "undefined" ? require("fs") : null')()
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 export interface Visita {
   rowNumber: number; // 7-indexed in Sheets
@@ -35,7 +44,8 @@ function getTokenData(): any {
       throw new Error("Invalid GOOGLE_TOKEN_JSON environment variable");
     }
   }
-  if (TOKEN_PATH && fs.existsSync(TOKEN_PATH)) {
+  const fs = getFs();
+  if (fs && TOKEN_PATH && fs.existsSync && fs.existsSync(TOKEN_PATH)) {
     const raw = fs.readFileSync(TOKEN_PATH, "utf-8");
     return JSON.parse(raw);
   }
@@ -44,11 +54,12 @@ function getTokenData(): any {
 
 function saveTokenData(data: any): void {
   try {
-    if (TOKEN_PATH && fs.existsSync(TOKEN_PATH)) {
+    const fs = getFs();
+    if (fs && TOKEN_PATH && fs.existsSync && fs.existsSync(TOKEN_PATH)) {
       fs.writeFileSync(TOKEN_PATH, JSON.stringify(data, null, 2), "utf-8");
     }
   } catch (e) {
-    console.warn("Could not save refreshed token to disk (serverless environment):", e);
+    console.warn("Could not save refreshed token to disk (serverless/edge environment):", e);
   }
 }
 

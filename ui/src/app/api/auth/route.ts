@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
+export const runtime = "edge";
+
 const PILOT_EMAIL = process.env.PILOT_USER_EMAIL || "marilia.cras@saoluis.ma.gov.br";
 const PILOT_PASS = process.env.PILOT_USER_PASS || "cras2026";
 

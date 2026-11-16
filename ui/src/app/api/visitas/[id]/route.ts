@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { updateVisitaStatus } from "@/lib/sheets";
 
+export const runtime = "edge";
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
