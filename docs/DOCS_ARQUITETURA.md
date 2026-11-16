@@ -30,6 +30,8 @@ Em conformidade com as diretrizes do esquadrão, a arquitetura do projeto absorv
 - **Referência 3 (Dashboard e UI):** Padrões modernos do Tailwind CSS v4 e componentes Shadcn-inspired para dashboards com cartões de métricas e tabelas paginadas.
 - **Referência 4 (Mobile App Shell & Bottom Tab Bar):** [`tablesawuplink633/nextjs-mobile-app-template`](https://github.com/tablesawuplink633/nextjs-mobile-app-template)
   - *Inteligência Absorvida:* Arquitetura híbrida de navegação móvel PWA/Mobile-First. Em telas mobile (`< md`), o cabeçalho superior é despoluído (mantendo apenas identidade e botão de encerramento de sessão) e a navegação principal é transferida para uma barra inferior fixa (`BottomTabBar`) com touch targets acessíveis de 48px, suporte a Safe Area do iOS (`env(safe-area-inset-bottom)`), feedback ativo e respiro inferior (`pb-24`) no container de conteúdo para uso confortável com uma mão em campo. Em desktop (`md:`), a interface mantém a barra superior tradicional completa.
+- **Referência 5 (PWA — Progressive Web App Spec):** [`gjohnsx/nextjs-pwa-template`](https://github.com/gjohnsx/nextjs-pwa-template)
+  - *Inteligência Absorvida:* Conformidade total com especificações PWA no Next.js 15 App Router: geração de manifest dual (`app/manifest.ts` e `public/manifest.json`), meta tags dedicadas para iOS Web App (`appleWebApp`, `statusBarStyle`, `apple-touch-icon`), Service Worker nativo em `public/sw.js` com estratégias de cache resilientes (Stale-While-Revalidate para ativos estáticos e Network-First para rotas de API com fallback offline), permitindo instalação nativa no Android e iOS ("Adicionar à Tela de Início").
 
 ---
 
