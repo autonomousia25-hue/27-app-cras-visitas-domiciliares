@@ -48,7 +48,8 @@ export function Navbar() {
           </div>
         </div>
 
-        <nav className="flex items-center gap-1 sm:gap-2">
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-1 sm:gap-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -63,7 +64,7 @@ export function Navbar() {
                 }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? "text-blue-600" : "text-slate-500"}`} />
-                <span className="hidden md:inline">{item.label}</span>
+                <span>{item.label}</span>
               </Link>
             );
           })}
@@ -82,11 +83,23 @@ export function Navbar() {
           <button
             onClick={handleLogout}
             title="Sair do sistema"
-            className="p-2 ml-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+            className="p-2 ml-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
           </button>
         </nav>
+
+        {/* Mobile Header Right: Clean and Accessible Logout */}
+        <div className="flex md:hidden items-center gap-2">
+          <button
+            onClick={handleLogout}
+            title="Sair do sistema"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200/90 transition-colors shadow-2xs cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5 text-slate-500" />
+            <span>Sair</span>
+          </button>
+        </div>
       </div>
     </header>
   );

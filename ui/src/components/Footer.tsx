@@ -3,7 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="w-full mt-auto py-5 border-t border-slate-200 bg-white/80 backdrop-blur-sm">
+    <footer className="w-full mt-auto py-5 mb-16 md:mb-0 border-t border-slate-200 bg-white/80 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
         <div>
           <span>© {new Date().getFullYear()} CRAS Visitas — Sistema de Gestão Socioassistencial</span>
