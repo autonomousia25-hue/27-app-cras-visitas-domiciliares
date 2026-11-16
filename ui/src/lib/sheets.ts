@@ -39,9 +39,24 @@ export interface MetricSummary {
 function getTokenData(): any {
   if (process.env.GOOGLE_TOKEN_JSON) {
     try {
-      return JSON.parse(process.env.GOOGLE_TOKEN_JSON);
-    } catch {
-      throw new Error("Invalid GOOGLE_TOKEN_JSON environment variable");
+      let raw: any = process.env.GOOGLE_TOKEN_JSON;
+      if (typeof raw === "string") {
+        raw = raw.trim();
+        if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
+          raw = raw.slice(1, -1).trim();
+        }
+      }
+      let parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if (typeof parsed === "string") {
+        try {
+          parsed = JSON.parse(parsed);
+        } catch {
+          // keep as is
+        }
+      }
+      return parsed;
+    } catch (e) {
+      throw new Error("Invalid GOOGLE_TOKEN_JSON environment variable: " + (e instanceof Error ? e.message : String(e)));
     }
   }
   const fs = getFs();
@@ -66,16 +81,21 @@ function saveTokenData(data: any): void {
 async function getAccessToken(): Promise<string> {
   const data = getTokenData();
 
-  const tokenObj = data.token || {};
+  const tokenObj = data?.token || (data?.refresh_token ? data : {}) || {};
   let accessToken = tokenObj.access_token;
-  const refreshToken = tokenObj.refresh_token;
-  const clientId = data.client_id;
-  const clientSecret = data.client_secret;
+  const refreshToken = tokenObj.refresh_token || data?.refresh_token;
+  const clientId = data?.client_id || process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = data?.client_secret || process.env.GOOGLE_CLIENT_SECRET;
 
   // Function to refresh token
   const refresh = async (): Promise<string> => {
     if (!refreshToken || !clientId || !clientSecret) {
-      return accessToken;
+      console.warn("Cannot refresh Google OAuth token: missing credentials", {
+        hasRefreshToken: !!refreshToken,
+        hasClientId: !!clientId,
+        hasClientSecret: !!clientSecret,
+      });
+      return accessToken || "";
     }
 
     const params = new URLSearchParams({
@@ -93,22 +113,26 @@ async function getAccessToken(): Promise<string> {
 
     if (res.ok) {
       const refreshed = await res.json();
-      data.token.access_token = refreshed.access_token;
+      if (data.token) {
+        data.token.access_token = refreshed.access_token;
+      } else {
+        data.access_token = refreshed.access_token;
+      }
       saveTokenData(data);
       return refreshed.access_token;
+    } else {
+      const errBody = await res.text();
+      console.error("Google OAuth token refresh failed:", res.status, errBody);
+      return accessToken || "";
     }
-    return accessToken;
   };
 
-  // If expiry is in the past, refresh proactively
-  if (tokenObj.expiry) {
-    const expiryDate = new Date(tokenObj.expiry);
-    if (new Date() >= expiryDate) {
-      accessToken = await refresh();
-    }
+  // If expiry is in the past, or accessToken is missing, refresh proactively
+  if (!accessToken || (tokenObj.expiry && new Date() >= new Date(tokenObj.expiry))) {
+    accessToken = await refresh();
   }
 
-  return accessToken;
+  return accessToken || "";
 }
 
 async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
@@ -124,32 +148,43 @@ async function authenticatedFetch(url: string, options: RequestInit = {}): Promi
   // If 401, force refresh and retry once
   if (res.status === 401) {
     const data = getTokenData();
-    const params = new URLSearchParams({
-      client_id: data.client_id,
-      client_secret: data.client_secret,
-      refresh_token: data.token.refresh_token,
-      grant_type: "refresh_token",
-    });
+    const tokenObj = data?.token || (data?.refresh_token ? data : {}) || {};
+    const clientId = data?.client_id || process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = data?.client_secret || process.env.GOOGLE_CLIENT_SECRET;
+    const refreshToken = tokenObj.refresh_token || data?.refresh_token;
 
-    const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params.toString(),
-    });
-
-    if (refreshRes.ok) {
-      const refreshed = await refreshRes.json();
-      data.token.access_token = refreshed.access_token;
-      saveTokenData(data);
-      token = refreshed.access_token;
-
-      res = await fetch(url, {
-        ...options,
-        headers: {
-          ...options.headers,
-          Authorization: `Bearer ${token}`,
-        },
+    if (refreshToken && clientId && clientSecret) {
+      const params = new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: "refresh_token",
       });
+
+      const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: params.toString(),
+      });
+
+      if (refreshRes.ok) {
+        const refreshed = await refreshRes.json();
+        if (data.token) {
+          data.token.access_token = refreshed.access_token;
+        } else {
+          data.access_token = refreshed.access_token;
+        }
+        saveTokenData(data);
+        token = refreshed.access_token;
+
+        res = await fetch(url, {
+          ...options,
+          headers: {
+            ...options.headers,
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
     }
   }
 

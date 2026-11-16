@@ -66,6 +66,7 @@ function toBRDate(iso: string): string {
 export default function VisitasPage() {
   const [visitas, setVisitas] = useState<Visita[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("TODOS");
   const [selectedBairro, setSelectedBairro] = useState("TODOS");
@@ -104,13 +105,17 @@ export default function VisitasPage() {
   const loadVisitas = async () => {
     try {
       setLoading(true);
+      setFetchError(null);
       const res = await fetch("/api/visitas", { cache: "no-store" });
       const data = await res.json();
       if (res.ok) {
         setVisitas(data.visitas || []);
+      } else {
+        setFetchError(data.error || "Não foi possível carregar os dados do Google Sheets.");
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
+      setFetchError(err instanceof Error ? err.message : "Erro ao conectar com a API");
     } finally {
       setLoading(false);
     }
@@ -370,6 +375,23 @@ export default function VisitasPage() {
           </Link>
         </div>
       </div>
+
+      {/* ERROR ALERT BANNER */}
+      {fetchError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-red-800 text-sm animate-fade-in shadow-xs">
+          <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h4 className="font-semibold text-red-900">Falha ao carregar dados do Google Sheets</h4>
+            <p className="mt-0.5 text-xs text-red-700 font-mono break-all">{fetchError}</p>
+          </div>
+          <button
+            onClick={loadVisitas}
+            className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
 
       {/* TOP VIEW MODE TABS */}
       <div className="bg-slate-100 p-1.5 rounded-2xl flex flex-wrap gap-1 border border-slate-200">
