@@ -36,28 +36,46 @@ export interface MetricSummary {
   agendamentoCras: number;
 }
 
+function parseFlexibleToken(raw: any): any {
+  if (typeof raw !== "string") return raw;
+  let str = raw.trim();
+
+  // Strip wrapping quotes if any
+  if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
+    str = str.slice(1, -1).trim();
+  }
+
+  // 1. Try standard JSON.parse
+  try {
+    let parsed = JSON.parse(str);
+    if (typeof parsed === "string") {
+      try {
+        parsed = JSON.parse(parsed);
+      } catch {
+        // continue
+      }
+    }
+    if (parsed && typeof parsed === "object") return parsed;
+  } catch {
+    // continue to fallback
+  }
+
+  // 2. Fallback: unescape backslashed quotes (common when copying from .env files)
+  try {
+    const unescaped = str.replace(/\\"/g, '"');
+    const parsed = JSON.parse(unescaped);
+    if (parsed && typeof parsed === "object") return parsed;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`Invalid GOOGLE_TOKEN_JSON environment variable: ${msg}`);
+  }
+
+  throw new Error("Invalid GOOGLE_TOKEN_JSON: could not parse into valid JSON object");
+}
+
 function getTokenData(): any {
   if (process.env.GOOGLE_TOKEN_JSON) {
-    try {
-      let raw: any = process.env.GOOGLE_TOKEN_JSON;
-      if (typeof raw === "string") {
-        raw = raw.trim();
-        if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
-          raw = raw.slice(1, -1).trim();
-        }
-      }
-      let parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-      if (typeof parsed === "string") {
-        try {
-          parsed = JSON.parse(parsed);
-        } catch {
-          // keep as is
-        }
-      }
-      return parsed;
-    } catch (e) {
-      throw new Error("Invalid GOOGLE_TOKEN_JSON environment variable: " + (e instanceof Error ? e.message : String(e)));
-    }
+    return parseFlexibleToken(process.env.GOOGLE_TOKEN_JSON);
   }
   const fs = getFs();
   if (fs && TOKEN_PATH && fs.existsSync && fs.existsSync(TOKEN_PATH)) {
