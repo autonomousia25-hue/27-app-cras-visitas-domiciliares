@@ -27,12 +27,33 @@ export interface MetricSummary {
   agendamentoCras: number;
 }
 
-async function getAccessToken(): Promise<string> {
-  if (!fs.existsSync(TOKEN_PATH)) {
-    throw new Error(`Token file not found at ${TOKEN_PATH}`);
+function getTokenData(): any {
+  if (process.env.GOOGLE_TOKEN_JSON) {
+    try {
+      return JSON.parse(process.env.GOOGLE_TOKEN_JSON);
+    } catch {
+      throw new Error("Invalid GOOGLE_TOKEN_JSON environment variable");
+    }
   }
-  const raw = fs.readFileSync(TOKEN_PATH, "utf-8");
-  const data = JSON.parse(raw);
+  if (TOKEN_PATH && fs.existsSync(TOKEN_PATH)) {
+    const raw = fs.readFileSync(TOKEN_PATH, "utf-8");
+    return JSON.parse(raw);
+  }
+  throw new Error(`Token credentials not found in GOOGLE_TOKEN_JSON or at ${TOKEN_PATH}`);
+}
+
+function saveTokenData(data: any): void {
+  try {
+    if (TOKEN_PATH && fs.existsSync(TOKEN_PATH)) {
+      fs.writeFileSync(TOKEN_PATH, JSON.stringify(data, null, 2), "utf-8");
+    }
+  } catch (e) {
+    console.warn("Could not save refreshed token to disk (serverless environment):", e);
+  }
+}
+
+async function getAccessToken(): Promise<string> {
+  const data = getTokenData();
 
   const tokenObj = data.token || {};
   let accessToken = tokenObj.access_token;
@@ -62,11 +83,7 @@ async function getAccessToken(): Promise<string> {
     if (res.ok) {
       const refreshed = await res.json();
       data.token.access_token = refreshed.access_token;
-      try {
-        fs.writeFileSync(TOKEN_PATH, JSON.stringify(data, null, 2), "utf-8");
-      } catch (e) {
-        console.warn("Could not save refreshed token to disk:", e);
-      }
+      saveTokenData(data);
       return refreshed.access_token;
     }
     return accessToken;
@@ -95,8 +112,7 @@ async function authenticatedFetch(url: string, options: RequestInit = {}): Promi
 
   // If 401, force refresh and retry once
   if (res.status === 401) {
-    const raw = fs.readFileSync(TOKEN_PATH, "utf-8");
-    const data = JSON.parse(raw);
+    const data = getTokenData();
     const params = new URLSearchParams({
       client_id: data.client_id,
       client_secret: data.client_secret,
@@ -113,7 +129,7 @@ async function authenticatedFetch(url: string, options: RequestInit = {}): Promi
     if (refreshRes.ok) {
       const refreshed = await refreshRes.json();
       data.token.access_token = refreshed.access_token;
-      fs.writeFileSync(TOKEN_PATH, JSON.stringify(data, null, 2), "utf-8");
+      saveTokenData(data);
       token = refreshed.access_token;
 
       res = await fetch(url, {
