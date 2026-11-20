@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { updateVisitaStatus } from "@/lib/sheets";
+import { isAuthenticated } from "@/lib/auth";
 
 export const runtime = "edge";
 
@@ -7,6 +8,13 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAuthenticated())) {
+    return NextResponse.json(
+      { error: "Acesso não autorizado. Por favor, realize login." },
+      { status: 401 }
+    );
+  }
+
   try {
     const { id } = await params;
     const rowNumber = parseInt(id, 10);

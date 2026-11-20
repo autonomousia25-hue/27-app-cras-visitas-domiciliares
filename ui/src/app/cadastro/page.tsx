@@ -78,6 +78,11 @@ export default function CadastroPage() {
         }),
       });
 
+      if (res.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
+
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || "Erro ao salvar na planilha");

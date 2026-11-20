@@ -107,6 +107,10 @@ export default function VisitasPage() {
       setLoading(true);
       setFetchError(null);
       const res = await fetch("/api/visitas", { cache: "no-store" });
+      if (res.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
       const data = await res.json();
       if (res.ok) {
         setVisitas(data.visitas || []);

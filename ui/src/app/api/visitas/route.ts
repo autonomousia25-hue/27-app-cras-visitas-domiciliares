@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import { fetchVisitas, appendVisitas } from "@/lib/sheets";
+import { isAuthenticated } from "@/lib/auth";
 
 export const runtime = "edge";
 
 export async function GET() {
+  if (!(await isAuthenticated())) {
+    return NextResponse.json(
+      { error: "Acesso não autorizado. Por favor, realize login." },
+      { status: 401 }
+    );
+  }
+
   try {
     const data = await fetchVisitas();
     return NextResponse.json(data);
@@ -14,6 +22,13 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!(await isAuthenticated())) {
+    return NextResponse.json(
+      { error: "Acesso não autorizado. Por favor, realize login." },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await req.json();
 

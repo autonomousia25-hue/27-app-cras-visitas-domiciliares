@@ -280,6 +280,20 @@ export async function fetchVisitas(): Promise<{ visitas: Visita[]; metrics: Metr
   return { visitas, metrics };
 }
 
+/**
+ * Mitigação contra Formula Injection (CWE-1236 / CSV Injection).
+ * Previne que valores iniciados com =, +, -, @ sejam executados como fórmulas no Google Sheets,
+ * prefixando com apóstrofo (') para forçar armazenamento como texto puro.
+ */
+export function sanitizeSheetValue(value: string | undefined): string {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (/^[=+\-@]/.test(trimmed)) {
+    return `'${trimmed}`;
+  }
+  return trimmed;
+}
+
 export async function updateVisitaStatus(
   rowNumber: number,
   status?: string,
@@ -296,18 +310,18 @@ export async function updateVisitaStatus(
   const getRes = await authenticatedFetch(getUrl);
   const current = (await getRes.json()).values?.[0] || ["", "", "", "", "", "", "", "", "", ""];
 
-  const updatedData = data !== undefined ? data : current[0] || "";
+  const updatedData = data !== undefined ? sanitizeSheetValue(data) : current[0] || "";
   const updatedUsuario = current[1] || "";
   const updatedCpf = current[2] || "";
-  const updatedBairro = bairro !== undefined ? bairro : current[3] || "";
-  const updatedEndereco = endereco !== undefined ? endereco : current[4] || "";
-  const updatedRef = referencia !== undefined ? referencia : current[5] || "";
-  const updatedTel = telefone !== undefined ? telefone : current[6] || "";
-  const updatedStatus = status !== undefined ? status : current[7] || "";
+  const updatedBairro = bairro !== undefined ? sanitizeSheetValue(bairro) : current[3] || "";
+  const updatedEndereco = endereco !== undefined ? sanitizeSheetValue(endereco) : current[4] || "";
+  const updatedRef = referencia !== undefined ? sanitizeSheetValue(referencia) : current[5] || "";
+  const updatedTel = telefone !== undefined ? sanitizeSheetValue(telefone) : current[6] || "";
+  const updatedStatus = status !== undefined ? sanitizeSheetValue(status) : current[7] || "";
   const updatedCadUnico = cadUnicoAtualizado !== undefined 
     ? (cadUnicoAtualizado ? "SIM" : "NÃO") 
     : current[8] || "";
-  const updatedObs = observacoes !== undefined ? observacoes : current[9] || "";
+  const updatedObs = observacoes !== undefined ? sanitizeSheetValue(observacoes) : current[9] || "";
 
   const putUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=USER_ENTERED`;
   const body = {
@@ -355,16 +369,16 @@ export async function appendVisitas(
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
 
   const values = newRows.map((r) => [
-    r.data || new Date().toLocaleDateString("pt-BR"), // Col A: Data
-    r.usuario,                                        // Col B: Usuário
-    r.cpf,                                            // Col C: CPF
-    r.bairro || "",                                   // Col D: Bairro
-    r.endereco || "",                                 // Col E: Endereço
-    r.referencia || "",                               // Col F: Referência
-    r.telefone || "",                                 // Col G: Telefone
-    r.status || "",                                   // Col H: Status
-    "NÃO",                                            // Col I: CadÚnico
-    r.observacoes || "",                              // Col J: Observações
+    r.data ? sanitizeSheetValue(r.data) : new Date().toLocaleDateString("pt-BR"), // Col A: Data
+    sanitizeSheetValue(r.usuario),                                                // Col B: Usuário
+    sanitizeSheetValue(r.cpf),                                                    // Col C: CPF
+    sanitizeSheetValue(r.bairro || ""),                                           // Col D: Bairro
+    sanitizeSheetValue(r.endereco || ""),                                         // Col E: Endereço
+    sanitizeSheetValue(r.referencia || ""),                                       // Col F: Referência
+    sanitizeSheetValue(r.telefone || ""),                                         // Col G: Telefone
+    sanitizeSheetValue(r.status || ""),                                           // Col H: Status
+    "NÃO",                                                                        // Col I: CadÚnico
+    sanitizeSheetValue(r.observacoes || ""),                                      // Col J: Observações
   ]);
 
   const res = await authenticatedFetch(url, {

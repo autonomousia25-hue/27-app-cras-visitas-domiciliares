@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { SESSION_COOKIE_NAME, VALID_SESSION_VALUE } from "@/lib/auth";
 
 export const runtime = "edge";
 
@@ -12,8 +13,10 @@ export async function POST(req: Request) {
 
     if (email === PILOT_EMAIL && password === PILOT_PASS) {
       const cookieStore = await cookies();
-      cookieStore.set("cras_session", "authenticated_marilia", {
+      cookieStore.set(SESSION_COOKIE_NAME, VALID_SESSION_VALUE, {
         httpOnly: true,
+        secure: true,
+        sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24 * 7, // 7 days
       });
@@ -28,7 +31,7 @@ export async function POST(req: Request) {
 
 export async function DELETE() {
   const cookieStore = await cookies();
-  cookieStore.delete("cras_session");
+  cookieStore.delete(SESSION_COOKIE_NAME);
   return NextResponse.json({ success: true });
 }
 

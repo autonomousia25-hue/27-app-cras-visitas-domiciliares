@@ -36,6 +36,10 @@ export default function DashboardPage() {
   const loadData = async () => {
     try {
       const res = await fetch("/api/visitas", { cache: "no-store" });
+      if (res.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
       const data = await res.json();
       if (res.ok) {
         setMetrics(data.metrics);
